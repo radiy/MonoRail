@@ -141,7 +141,7 @@ namespace Castle.MonoRail.Framework.Services
 				return converter.CanHandle(objectType);
 			}
 
-			public override object ReadJson(JsonReader reader, Type objectType, JsonSerializer serializer)
+			public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 			{
 				return converter.ReadJson(new JSONReaderAdapter(reader), objectType);
 			}

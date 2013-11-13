@@ -86,7 +86,7 @@ namespace Castle.MonoRail.WindsorExtension
 		{
 			public IServiceProviderEx LocateProvider()
 			{
-				return WindsorContainerAccessorUtil.ObtainContainer();
+				return (IServiceProviderEx)WindsorContainerAccessorUtil.ObtainContainer();
 			}
 		}
 	}
