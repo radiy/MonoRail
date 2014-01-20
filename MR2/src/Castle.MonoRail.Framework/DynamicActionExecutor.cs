@@ -13,6 +13,7 @@
 // limitations under the License.
 
 
+using System.Collections.Concurrent;
 using System.Linq;
 
 namespace Castle.MonoRail.Framework
@@ -26,7 +27,8 @@ namespace Castle.MonoRail.Framework
 	/// </summary>
 	public class DynamicActionExecutor : IExecutableAction
 	{
-		static IDictionary<Type, IEnumerable<FilterDescriptor>> FilterDescriptorsByDynamicActionTypeMap = new Dictionary<Type, IEnumerable<FilterDescriptor>>();
+		private static ConcurrentDictionary<Type, FilterDescriptor[]> cache
+			= new ConcurrentDictionary<Type, FilterDescriptor[]>();
 		private readonly IDynamicAction action;
 
 		/// <summary>
@@ -142,33 +144,25 @@ namespace Castle.MonoRail.Framework
 			return action.Execute(engineContext, controller, context);
 		}
 
-
-
-
 		/// <inheriteddoc/>
 		public IEnumerable<FilterDescriptor> ActionLevelFilters
 		{
 			get { return ExtractFilterDescriptorsFromDynamicActionInstance(action); }
 		}
 
-		private static void ensureFilterDescriptorInitializedForActionType(IDynamicAction dynamicAction)
-		{
-
-			var dynamicactiontype = dynamicAction.GetType();
-
-			if(!FilterDescriptorsByDynamicActionTypeMap.ContainsKey(dynamicactiontype))
-			{
-				var filterattributes= (IEnumerable<FilterAttribute>) dynamicactiontype.GetCustomAttributes(typeof (FilterAttribute), false);
-				var filterdescriptors = filterattributes.SelectMany(f => f.BuildFilterDescriptors());
-				FilterDescriptorsByDynamicActionTypeMap.Add(dynamicactiontype, filterdescriptors);
-			}
-
-		}
-
 		internal static IEnumerable<FilterDescriptor> ExtractFilterDescriptorsFromDynamicActionInstance(IDynamicAction dynamicAction)
 		{
-			ensureFilterDescriptorInitializedForActionType(dynamicAction);
-			return FilterDescriptorsByDynamicActionTypeMap[dynamicAction.GetType()];
+			var key = dynamicAction.GetType();
+			FilterDescriptor[] value;
+			if (!cache.TryGetValue(key, out value))
+			{
+				value = key.GetCustomAttributes(typeof (FilterAttribute), false)
+					.Cast<FilterAttribute>()
+					.SelectMany(f => f.BuildFilterDescriptors())
+					.ToArray();
+				cache.TryAdd(key, value);
+			}
+			return value;
 		}
 	}
 }
