@@ -213,7 +213,7 @@ namespace Castle.MonoRail.Framework.Internal
 		/// </summary>
 		public void RedirectToSiteRoot()
 		{
-			RedirectToUrl(currentUrl.AppVirtualDir + "/");
+			RedirectToUrl("~/");
 		}
 
 		/// <summary>
